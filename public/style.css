@@ -1,0 +1,233 @@
+:root {
+  --main-color: #0a84ff;
+  --main-color-hover: #2094fa;
+}
+
+*:focus {
+  outline: none;
+}
+
+* { margin: 0px; }
+
+body{
+  background-color: #121212;
+  color: #FEFEFE;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+footer{
+  background-color: #333333;
+  height: 55px;
+  width: 450px;
+  position: absolute;
+  bottom: 0px;
+}
+
+div#loading-bar-container {
+  background-color: #222324;
+  width: 400px;
+  height: 16px;
+  margin: 10px 25px 4px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+div#loading-bar {
+  background-color: var(--main-color);
+  width: 0%;
+  height: 100%;
+  transition: width .25s;
+}
+
+span#status {
+  margin-left: 25px;
+  width: 400px;
+  display: block;
+  font-weight: bold;
+  font-size: 14px;
+  opacity: 0.7;
+  white-space:nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+section.content{
+  background-color: #121212;
+  width: 100%;
+  height: 209px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  position: absolute;
+}
+
+.hidden {
+  display: none !important;
+}
+
+button{
+  background-color: var(--main-color);
+  display: block;
+  color: white;
+  padding: 8px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  border: 0px;
+  transition: background-color .25s;
+  margin: 0 auto;
+}
+
+button:hover{
+  background-color: var(--main-color-hover);
+}
+
+button:disabled {
+  background-color: #333333;
+  color: #757575;
+}
+
+#modpack-selection p {
+  text-align: center;
+  margin: 8px 0px;
+  opacity: 0.75;
+}
+
+#mod-container {
+  width: 400px;
+  height: 150px;
+  margin: 0 auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#mod-container .picture {
+  background: #333333 url('res/no_pic.png');
+  background-size: contain;
+  width: 120px;
+  min-width: 120px;
+  height: 120px;
+  border-radius: 12px;
+}
+
+#mod-container .info {
+  margin-left: 12px;
+}
+
+#mod-container .info h1{
+  margin: 0px;
+  font-size: 25px;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* number of lines to show */
+  -webkit-box-orient: vertical;
+}
+#mod-container .info h2{
+  margin: 0px 0px 12px;
+  font-size: 18px;
+  font-weight: normal;
+}
+#mod-container .info p{
+  margin: 0px;
+  font-size: 14px;
+  opacity: 0.75;
+}
+
+.icon {
+  fill: white;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0.75;
+  transition: opacity .25s;
+}
+.icon:hover {
+  opacity: 1;
+}
+
+#settings-tab{
+  background-color: #121212;
+  width: 100%;
+  height: 264px;
+  position: absolute;
+  right: -100%;
+  transition: right .25s;
+}
+
+#settings-tab main {
+  padding: 12px 25px;
+}
+
+#settings-tab main hr {
+  opacity: 0.75;
+  margin-bottom: 12px;
+}
+
+#settings-tab footer p{
+  margin: 8px 25px 0px;
+  font-weight: bold;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+#settings-tab footer ul{
+  display: flex;
+  padding: 0px 25px;
+}
+#settings-tab footer ul li {
+  list-style: none;
+  opacity: 0.7;
+  transition: opacity .25s;
+}
+#settings-tab footer ul li:hover {
+  opacity: 1;
+}
+
+#save-settings {
+  margin: 0px;
+  position: absolute;
+  bottom: 12px;
+  right: 25px;
+}
+
+#default-settings {
+  margin: 0px;
+  position: absolute;
+  bottom: 12px;
+  right: 115px;
+  background-color: #ff3b30;
+}
+#default-settings:hover {background-color: #ff453a;}
+
+a {
+  color: var(--main-color);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--main-color-hover);
+}
+
+label {
+  font-size: 14px;
+  opacity: 0.75;
+}
+
+input[type=text] {
+  background-color: inherit;
+  color: inherit;
+  display: block;
+  margin-top: 4px;
+  border: 0px solid;
+  border-bottom: 2px solid white;
+  font-size: 16px;
+  width: 100%;
+  transition: .25s;
+}
+
+input[type=text]:focus {
+  border-bottom-color: var(--main-color);
+}

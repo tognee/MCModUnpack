@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MC ModUnpack</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="material-loader.css">
+</head>
+<body>
+  <section class="content">
+    <div class="loader">
+      <svg class="circular" viewBox="25 25 50 50">
+        <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="3" stroke-miterlimit="10"/>
+      </svg>
+    </div>
+  </section>
+  <section class="content" id="modpack-selection">
+    <button id="select-modpack" type="button" name="select-modpack">Load a modpack</button>
+    <p>Or drop the zip in here</p>
+  </section>
+  <section class="content hidden" id="modpack-info">
+    <div id="mod-container">
+      <div class="picture"></div>
+      <div class="info">
+        <h1></h1>
+        <h2></h2>
+        <p class="version"></p>
+        <p class="mods"></p>
+      </div>
+    </div>
+    <button id="install-modpack" type="button" name="install-modpack">Install modpack</button>
+  </section>
+  <img src="res/settings.svg" id="open-settings" class="icon"/>
+  <footer>
+    <div id="loading-bar-container">
+      <div id="loading-bar"></div>
+    </div>
+    <span id="status">Ready!</span>
+  </footer>
+  <section id="settings-tab" >
+    <img src="res/close.svg" id="close-settings" class="icon"/>
+    <main>
+      <h1>Settings</h1>
+      <hr/>
+      <label for="minecraftFolder">.minecraft folder</label>
+      <input type="text" name="minecraftPath" value="">
+    </main>
+    <footer>
+      <p>Made by tognee</p>
+      <ul>
+        <li><a href="https://github.com/tognee" target="_blank"><img src="res/github.svg"/></span></a></li>
+        <li><a href="https://tognee.me/paypal" target="_blank"><img src="res/paypal.svg"/></span></a></li>
+        <button id="save-settings" type="button" name="save-settings">Save</button>
+        <button id="default-settings" type="button" name="save-settings">Reset</button>
+      </ul>
+    </footer>
+  </section>
+  <script src="app.js"></script>
+</body>
+</html>
