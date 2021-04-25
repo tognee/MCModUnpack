@@ -12,6 +12,7 @@ const fse = require('fs-extra')
 const AdmZip = require('adm-zip')
 const mime = require('mime-types')
 const os = require('os')
+const {promisify} = require('util')
 const curseforge = require('./curseforge.js')
 
 const iconExtensions = ['.jpg', '.jpeg', '.png']
@@ -122,13 +123,23 @@ async function loadModpack(filepath){
   win.webContents.send("loadingModpack")
   if (fs.existsSync('.pack')) fs.rmdirSync('.pack', { recursive: true })
   let zip = new AdmZip(filepath)
-  zip.extractAllTo('.pack', true)
-  win.webContents.send("updateStatus", "Reading Info...")
-  if (!fs.existsSync('.pack/manifest.json')){
+  let zipFiles = zip.getEntries()
+  let manifestFound = false
+  for (let i = 0; i<zipFiles.length; i++){
+    if (zipFiles[i].entryName == "manifest.json"){
+      manifestFound = true
+      break
+    }
+  }
+  if (!manifestFound){
     win.webContents.send("ErrorNoModpack")
     fs.rmdirSync('.pack', { recursive: true })
     return
   }
+  const pExtractAll = promisify(zip.extractAllToAsync.bind(zip))
+  await pExtractAll('.pack', true)
+  
+  win.webContents.send("updateStatus", "Reading Info...")
 
   manifest = JSON.parse(fs.readFileSync('.pack/manifest.json'))
   let modpackInfo = {
