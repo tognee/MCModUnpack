@@ -47,20 +47,23 @@ function createWindow () {
   win = new BrowserWindow({
     width: 450,
     height: 264,
+    useContentSize: true,
+    autoHideMenuBar: true,
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
   })
+  win.setMenu(null)
 
-  win.removeMenu()
-
+  /*
   globalShortcut.register('f5', function() {
 		win.reload()
 	})
   globalShortcut.register('f12', function() {
 		win.webContents.openDevTools()
 	})
+  */
 
   win.webContents.on('new-window', function(e, url) {
     e.preventDefault();
