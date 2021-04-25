@@ -43,8 +43,18 @@
     <main>
       <h1>Settings</h1>
       <hr/>
-      <label for="minecraftFolder">.minecraft folder</label>
-      <input type="text" name="minecraftPath" value="">
+      <div class="input-container">
+        <label for="minecraftFolder">.minecraft folder</label>
+        <input type="text" name="minecraftPath" value="">
+      </div>
+      <div class="input-container">
+        <input type="checkbox" name="createProfiles" value="">
+        <label for="createProfiles">Install modpack in separate folder</label>
+      </div>
+      <div class="input-container">
+        <input type="checkbox" name="modSymlink" value="">
+        <label for="modSymlink">Cache mods in a separate folder</label>
+      </div>
     </main>
     <footer>
       <p>Made by tognee</p>

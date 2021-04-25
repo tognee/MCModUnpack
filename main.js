@@ -1,11 +1,4 @@
-const {
-  app,
-  BrowserWindow,
-  globalShortcut,
-  ipcMain,
-  dialog,
-  shell
-} = require('electron')
+const { app, BrowserWindow, globalShortcut, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const fse = require('fs-extra')
@@ -17,6 +10,7 @@ const curseforge = require('./curseforge.js')
 
 const iconExtensions = ['.jpg', '.jpeg', '.png']
 
+// Find default position for .minecraft
 let defaultMinecraftPath
 switch (os.platform()) {
   case 'win32':
@@ -30,15 +24,24 @@ switch (os.platform()) {
     defaultMinecraftPath = "/home/" + os.userInfo().username + "/.minecraft"
 }
 
+// Define Default Setings
 const defaultSettings = {
-  minecraftPath: defaultMinecraftPath
+  minecraftPath: defaultMinecraftPath,
+  createProfiles: true,
+  modSymlink: true
 }
-
+// Load settings file if present
 let settings
 if (fs.existsSync('settings.json')){
   settings = JSON.parse(fs.readFileSync('settings.json'))
 }else{
-  settings = { ...defaultSettings }
+  settings = {}
+}
+// Update settings file
+settings = { ...defaultSettings, ...settings }
+
+function isDev() {
+  return process.argv[2] == '--dev';
 }
 
 let win
@@ -57,19 +60,20 @@ function createWindow () {
   })
   win.setMenu(null)
 
-  /*
-  globalShortcut.register('f5', function() {
-		win.reload()
-	})
-  globalShortcut.register('f12', function() {
-		win.webContents.openDevTools()
-	})
-  */
+  if (isDev()){
+    globalShortcut.register('f5', function() {
+  		win.reload()
+  	})
+    globalShortcut.register('f12', function() {
+  		win.webContents.openDevTools()
+  	})
+  }
 
+  // Open links in external browser
   win.webContents.on('new-window', function(e, url) {
-    e.preventDefault();
-    shell.openExternal(url);
-  });
+    e.preventDefault()
+    shell.openExternal(url)
+  })
 
   win.loadFile(path.join('public', 'index.html'))
 }
@@ -77,6 +81,7 @@ function createWindow () {
 app.whenReady().then(() => {
   createWindow()
 
+  // Only one istance per time
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
@@ -86,11 +91,25 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    // Remove current working .pack when closing
     fs.rmdirSync('.pack', { recursive: true })
     app.quit()
   }
 })
 
+// Settings calls handlers
+ipcMain.on('getSettings', (event)=>{
+  win.webContents.send("settings", settings)
+})
+ipcMain.on('getDefaultSettings', (event)=>{
+  win.webContents.send("settings", defaultSettings)
+})
+ipcMain.on('setSettings', (event, newSettings)=>{
+  settings = newSettings
+  fs.writeFileSync('settings.json', JSON.stringify(settings))
+})
+
+// Load modpack file
 ipcMain.on('openSelectModpackDialog', async (event) => {
   let path = await dialog.showOpenDialog({
     title: "Select the modpack file",
@@ -102,27 +121,17 @@ ipcMain.on('openSelectModpackDialog', async (event) => {
   if (path.filePaths[0]) await loadModpack(path.filePaths[0])
   else win.webContents.send("ErrorNoModpack")
 })
-
 ipcMain.on('loadModpackFromDrag', async (event, filepath) => {
   await loadModpack(filepath)
 })
 
-ipcMain.on('getSettings', (event)=>{
-  win.webContents.send("settings", settings)
-})
-ipcMain.on('getDefaultSettings', (event)=>{
-  win.webContents.send("settings", defaultSettings)
-})
-
-ipcMain.on('setSettings', (event, newSettings)=>{
-  settings = newSettings
-  fs.writeFileSync('settings.json', JSON.stringify(settings))
-})
-
 async function loadModpack(filepath){
   win.webContents.send("loadingModpack")
+  // Remove current pack if present
   if (fs.existsSync('.pack')) fs.rmdirSync('.pack', { recursive: true })
+
   let zip = new AdmZip(filepath)
+  // Check if zipfile is a modpack
   let zipFiles = zip.getEntries()
   let manifestFound = false
   for (let i = 0; i<zipFiles.length; i++){
@@ -136,20 +145,22 @@ async function loadModpack(filepath){
     fs.rmdirSync('.pack', { recursive: true })
     return
   }
+  // Extract the zip in the .pack folder
   const pExtractAll = promisify(zip.extractAllToAsync.bind(zip))
   await pExtractAll('.pack', true)
 
   win.webContents.send("updateStatus", "Reading Info...")
-
   manifest = JSON.parse(fs.readFileSync('.pack/manifest.json'))
   let modpackInfo = {
     name: manifest.name,
     author: manifest.author,
+    version: manifest.manifestVersion,
     mcVersion: manifest.minecraft.version,
     modloader: manifest.minecraft.modLoaders[0].id,
     modsNum: manifest.files.length
   }
 
+  // Check for modpack icon
   for (let i = 0; i < iconExtensions.length; i++){
     let iconPath = `.pack/icon${iconExtensions[i]}`
     if (fs.existsSync(iconPath)){
@@ -160,12 +171,14 @@ async function loadModpack(filepath){
     }
   }
 
+  // Add mods in the overrides folder to the count
   if (fs.existsSync('.pack/overrides/mods'))
     modpackInfo.modsNum += fs.readdirSync('.pack/overrides/mods').length
+
   win.webContents.send("modpackInfo", modpackInfo)
 }
 
-async function checkAndInstallForge(mc, ver){
+async function checkForge(mc, ver){
   let loaderFolder = `${mc}-forge-${ver}`
   let isModloaderInstalled = fs.existsSync(settings.minecraftPath+'/versions/'+loaderFolder)
   if (isModloaderInstalled) return loaderFolder
@@ -175,7 +188,7 @@ async function checkAndInstallForge(mc, ver){
   return false
 }
 
-async function checkAndInstallFabric(mc, ver){
+async function checkFabric(mc, ver){
   let loaderFolder = `fabric-loader-${ver}-${mc}`
   let isModloaderInstalled = fs.existsSync(settings.minecraftPath+'/versions/'+loaderFolder)
   if (isModloaderInstalled) return loaderFolder
@@ -185,7 +198,7 @@ async function checkAndInstallFabric(mc, ver){
   return false
 }
 
-ipcMain.on('installModpack', async (event)=>{
+ipcMain.on('installModpack', async (event, forced)=>{
   let modpackSlug = manifest.name.replace(/\s+/g, '-').toLowerCase()
   let minecraftVersion = manifest.minecraft.version
   let loader = manifest.minecraft.modLoaders[0].id
@@ -194,60 +207,129 @@ ipcMain.on('installModpack', async (event)=>{
   win.webContents.send("updateStatus", `Checking if ${loader} is installed...`)
   let loaderFolder
   switch (loaderName) {
-    case 'forge': loaderFolder = await checkAndInstallForge(minecraftVersion, loaderVersion); break;
-    case 'fabric': loaderFolder = await checkAndInstallFabric(minecraftVersion, loaderVersion); break;
+    case 'forge': loaderFolder = await checkForge(minecraftVersion, loaderVersion); break;
+    case 'fabric': loaderFolder = await checkFabric(minecraftVersion, loaderVersion); break;
   }
-
   if (!loaderFolder){
     win.webContents.send("installationDone", false)
     return
   }
 
-  const modpackFolder = settings.minecraftPath+'/modpacks/'+modpackSlug
-  if (!fs.existsSync(modpackFolder)) fs.mkdirSync(modpackFolder, { recursive: true })
+  let modpackFolder = settings.minecraftPath
+  if (settings.createProfiles) modpackFolder += '/modpacks/'+modpackSlug
 
-  win.webContents.send("updateStatus", `Initializing download...`)
+  if (fs.existsSync(modpackFolder+'/modpack.json')){
+    let currentModpack = JSON.parse(fs.readFileSync(`${modpackFolder}/modpack.json`))
+    if (currentModpack.version == manifest.manifestVersion && !forced){
+      win.webContents.send("updateStatus", 'Modpack already installed!')
+      win.webContents.send("updateLoading", 100)
+      win.webContents.send("installationDone", true)
+      return
+    }else{
+      currentModpack.overrides.forEach((item, i) => {
+        fse.removeSync(`${modpackFolder}/${item}`)
+      })
+      fse.removeSync(`${modpackFolder}/mods`)
+    }
+  }
+
+  win.webContents.send("updateStatus", 'Initializing download...')
+
+  const modlistFolder = settings.minecraftPath+'/.modlist'
+  if (!fs.existsSync(modlistFolder)) fs.mkdirSync(modlistFolder, { recursive: true })
+  let filesDB = {}
+  if (fs.existsSync(`${modlistFolder}/filesDB.json`))
+    filesDB = JSON.parse(fs.readFileSync(`${modlistFolder}/filesDB.json`))
+
+  let filesKeys = Object.keys(filesDB)
+  let modpackFiles = []
+  let modpackFilesKeys = []
+
   for (let i = 0; i < manifest.files.length; i++){
     let file = manifest.files[i]
-    let projectData = await curseforge.getProjectData(file.projectID)
-    let fileType = projectData.websiteUrl.split('/')[4]
-    switch (fileType) {
-      case 'mc-mods': fileType = 'mod'; break;
-      case 'texture-packs': fileType = 'resourcepack'; break;
-    }
-    win.webContents.send("updateStatus", `Downloading ${fileType} ${projectData.name}... (${i+1}/${manifest.files.length})`)
+    let fileObject = {}
 
-    let fileData = await curseforge.getFileData(file.projectID, file.fileID)
-    let {fileName, downloadUrl} = fileData
-    let filePath = `${modpackFolder}/${fileType}s/${fileName}`
-    if (fs.existsSync(filePath)){
-      let stats = fs.statSync(filePath)
-      if (stats.size != fileData.fileLength)
-        await curseforge.downloadFile(filePath, downloadUrl)
-    }else{
-      await curseforge.downloadFile(filePath, downloadUrl)
+    if (filesKeys.includes(`${file.projectID}_${file.fileID}`)){
+      fileObject = filesDB[`${file.projectID}_${file.fileID}`]
+    } else {
+      let projectData = await curseforge.getProjectData(file.projectID)
+      fileObject.projectName = projectData.name
+
+      fileObject.type = projectData.websiteUrl.split('/')[4]
+      switch (fileObject.type) {
+        case 'mc-mods': fileObject.type = 'mod'; break;
+        case 'texture-packs': fileObject.type = 'resourcepack'; break;
+      }
+
+      let fileData = await curseforge.getFileData(file.projectID, file.fileID)
+      fileObject.fileName = fileData.fileName
+      fileObject.downloadUrl = fileData.downloadUrl
+      fileObject.fileLength = fileData.fileLength
+
+      filesDB[`${file.projectID}_${file.fileID}`] = fileObject
     }
+
+    win.webContents.send("updateStatus", `Downloading ${fileObject.type} ${fileObject.projectName}... (${i+1}/${manifest.files.length})`)
+
+    let filePath = `${modlistFolder}/${fileObject.type}s/${fileObject.fileName}`
+    let alreadyDownloaded = fs.existsSync(filePath)
+    if (alreadyDownloaded){
+      let stats = fs.statSync(filePath)
+      alreadyDownloaded = stats.size == fileObject.fileLength
+    }
+
+    if (!alreadyDownloaded) await curseforge.downloadFile(filePath, fileObject.downloadUrl)
 
     win.webContents.send("updateLoading", Math.round((i+1)*100/manifest.files.length))
+
+    modpackFilesKeys.push(`${file.projectID}_${file.fileID}`)
+    modpackFiles.push(fileObject)
+  }
+
+  fs.writeFileSync(`${modlistFolder}/filesDB.json`, JSON.stringify(filesDB))
+
+  if (!fs.existsSync(modpackFolder)) fs.mkdirSync(modpackFolder, { recursive: true })
+  if (settings.modSymlink){
+    modpackFiles.forEach((file) => {
+      fse.createSymlinkSync(`${modlistFolder}/${file.type}s/${file.fileName}`, `${modpackFolder}/${file.type}s/${file.fileName}`, 'file')
+    })
+  } else {
+    modpackFiles.forEach((file) => {
+      fse.moveSync(`${modlistFolder}/${file.type}s/${file.fileName}`, `${modpackFolder}/${file.type}s/${file.fileName}`)
+    })
+    fse.removeSync(`${modlistFolder}`)
   }
 
   win.webContents.send("updateStatus", `Copying overrides...`)
   fse.copySync('.pack/overrides', modpackFolder)
+  let overrides = fs.readdirSync('.pack/overrides')
 
-  win.webContents.send("updateStatus", `Generating profile...`)
-  let launcherProfiles = JSON.parse(fs.readFileSync(`${settings.minecraftPath}/launcher_profiles.json`))
-  if (!launcherProfiles.profiles[modpackSlug])
-    launcherProfiles.profiles[modpackSlug] = {
-      created: new Date().toISOString(),
-      gameDir: modpackFolder,
-      icon: "TNT",
-      lastVersionId: loaderFolder,
-      name : manifest.name,
-      type : "custom"
-    }
-  fs.writeFileSync(`${settings.minecraftPath}/launcher_profiles.json`, JSON.stringify(launcherProfiles))
+  if (settings.createProfiles){
+    win.webContents.send("updateStatus", `Generating profile...`)
+    let launcherProfiles = JSON.parse(fs.readFileSync(`${settings.minecraftPath}/launcher_profiles.json`))
+    if (!launcherProfiles.profiles[modpackSlug])
+      launcherProfiles.profiles[modpackSlug] = {
+        created: new Date().toISOString(),
+        gameDir: modpackFolder,
+        icon: "TNT",
+        lastVersionId: loaderFolder,
+        name : manifest.name,
+        type : "custom"
+      }
+    fs.writeFileSync(`${settings.minecraftPath}/launcher_profiles.json`, JSON.stringify(launcherProfiles))
+  }
 
   fs.rmdirSync('.pack', { recursive: true })
+  fs.writeFileSync(`${modpackFolder}/modpack.json`, JSON.stringify({
+    name: manifest.name,
+    author: manifest.author,
+    version: manifest.manifestVersion,
+    mcVersion: manifest.minecraft.version,
+    modloader: loaderFolder,
+    files: modpackFilesKeys,
+    overrides
+  }))
+
   win.webContents.send("updateStatus", `Ready!`)
   win.webContents.send("installationDone", true)
 })

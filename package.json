@@ -6,7 +6,7 @@
   "author": "tognee <tognee64@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --dev",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },

@@ -11,6 +11,8 @@ const sectionDisplayModpack = document.querySelector("#modpack-info")
 const sectionSettings = document.querySelector("#settings-tab")
 
 const minecraftPath = document.querySelector("#settings-tab input[name=minecraftPath]")
+const createProfiles = document.querySelector("#settings-tab input[name=createProfiles]")
+const modSymlink = document.querySelector("#settings-tab input[name=modSymlink]")
 
 const modpackTitle = document.querySelector("#mod-container .info h1")
 const modpackAuthor = document.querySelector("#mod-container .info h2")
@@ -23,14 +25,8 @@ let loadingBar = document.querySelector("#loading-bar")
 
 let loadingModpackLock = false
 
-window.api.send('getSettings')
-
 window.api.receive("updateStatus", (text) => {
   statusText.innerText = text+""
-})
-
-window.api.receive("settings", (settings) => {
-  minecraftPath.value = settings.minecraftPath
 })
 
 window.api.receive("ErrorNoModpack", () => {
@@ -110,7 +106,7 @@ document.addEventListener('dragover', (e) => {
 btnInstallModpack.addEventListener('click', (event)=>{
   btnInstallModpack.disabled = true
   loadingModpackLock = true
-  window.api.send('installModpack')
+  window.api.send('installModpack', event.shiftKey)
 })
 
 // Open/Close settings
@@ -124,10 +120,21 @@ btnCloseSettings.addEventListener('click', (event)=>{
 
 btnSaveSettings.addEventListener('click', (event)=>{
   window.api.send('setSettings', {
-    minecraftPath: minecraftPath.value
+    minecraftPath: minecraftPath.value,
+    createProfiles: createProfiles.checked,
+    modSymlink: modSymlink.checked,
   })
+})
+
+window.api.receive("settings", (settings) => {
+  minecraftPath.value = settings.minecraftPath
+  createProfiles.checked = settings.createProfiles
+  modSymlink.checked = settings.modSymlink
 })
 
 btnDefaultSettings.addEventListener('click', (event)=>{
   window.api.send('getDefaultSettings')
 })
+
+// Load settings on startup
+window.api.send('getSettings')

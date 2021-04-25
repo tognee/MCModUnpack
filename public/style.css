@@ -231,3 +231,28 @@ input[type=text] {
 input[type=text]:focus {
   border-bottom-color: var(--main-color);
 }
+
+div.input-container {
+  margin-bottom: 8px;
+}
+
+input[type='checkbox'] {
+		display: inline-block;
+		position: relative;
+		opacity: 0.5;
+		margin: 3px;
+		border: 2px solid gray;
+		border-radius: 2px;
+		background-color: none;
+		padding: 7px;
+	}
+
+	input[type='checkbox']:checked {
+		opacity: 1;
+		border-width: 0;
+		background-color: var(--primary-color);
+		background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' height='18' viewBox='3 3 18 18' width='18'%3E%3Cpath fill='%23ffffff' d='M 10,17 5,12 6.41,10.59 10,14.17 17.59,6.58 19,8 Z'/%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3C/svg%3E");
+		background-position: center center;
+		padding: 9px;
+		color: var(--primary-text);
+	}
