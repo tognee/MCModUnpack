@@ -138,7 +138,7 @@ async function loadModpack(filepath){
   }
   const pExtractAll = promisify(zip.extractAllToAsync.bind(zip))
   await pExtractAll('.pack', true)
-  
+
   win.webContents.send("updateStatus", "Reading Info...")
 
   manifest = JSON.parse(fs.readFileSync('.pack/manifest.json'))
@@ -206,6 +206,7 @@ ipcMain.on('installModpack', async (event)=>{
   const modpackFolder = settings.minecraftPath+'/modpacks/'+modpackSlug
   if (!fs.existsSync(modpackFolder)) fs.mkdirSync(modpackFolder, { recursive: true })
 
+  win.webContents.send("updateStatus", `Initializing download...`)
   for (let i = 0; i < manifest.files.length; i++){
     let file = manifest.files[i]
     let projectData = await curseforge.getProjectData(file.projectID)
