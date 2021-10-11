@@ -1,5 +1,6 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
+const fsConstanst = require('fs').constants
 const fs = require('fs').promises
 const fse = require('fs-extra')
 const AdmZip = require('adm-zip')
@@ -129,7 +130,9 @@ ipcMain.on('loadModpackFromDrag', async (event, filepath) => {
 async function loadModpack(filepath){
   win.webContents.send("loadingModpack")
   // Remove current pack if present
-  if (await fs.exists('.pack')) await fs.rmdir('.pack', { recursive: true })
+  try {
+    await fs.rmdir('.pack', { recursive: true })
+  } catch { /*empty*/ }
 
   let zip = new AdmZip(filepath)
   // Check if zipfile is a modpack
@@ -164,24 +167,25 @@ async function loadModpack(filepath){
   // Check for modpack icon
   for (let i = 0; i < iconExtensions.length; i++){
     let iconPath = `.pack/icon${iconExtensions[i]}`
-    if (await fs.exists(iconPath)){
+    try {
       let mimetype = mime.lookup(iconPath)
       if (mimetype)
         modpackInfo.picture = `data:${mimetype};base64,${(await fs.readFile(iconPath)).toString('base64')}`
       break
-    }
+    } catch { /*empty*/ }
   }
 
   // Add mods in the overrides folder to the count
-  if (await fs.exists('.pack/overrides/mods'))
+  try {
     modpackInfo.modsNum += (await fs.readdir('.pack/overrides/mods')).length
+  } catch { /*empty*/ }
 
   win.webContents.send("modpackInfo", modpackInfo)
 }
 
 async function checkForge(mc, ver){
   let loaderFolder = `${mc}-forge-${ver}`
-  let isModloaderInstalled = await fs.exists(settings.minecraftPath+'/versions/'+loaderFolder)
+  let isModloaderInstalled = await fs.access(settings.minecraftPath+'/versions/'+loaderFolder, fsConstanst.F_OK)
   if (isModloaderInstalled) return loaderFolder
   win.webContents.send("updateStatus", `Please install Forge ${ver} for ${mc}`)
   const url = `https://adfoc.us/serve/sitelinks/?id=271228&url=https://maven.minecraftforge.net/net/minecraftforge/forge/${mc}-${ver}/forge-${mc}-${ver}-installer.jar`
@@ -191,7 +195,7 @@ async function checkForge(mc, ver){
 
 async function checkFabric(mc, ver){
   let loaderFolder = `fabric-loader-${ver}-${mc}`
-  let isModloaderInstalled = await fs.exists(settings.minecraftPath+'/versions/'+loaderFolder)
+  let isModloaderInstalled = await fs.access(settings.minecraftPath+'/versions/'+loaderFolder, fsConstanst.F_OK)
   if (isModloaderInstalled) return loaderFolder
   win.webContents.send("updateStatus", `Please install Fabric Loader ${ver} for ${mc}`)
   const url = `https://fabricmc.net/use/`
@@ -221,7 +225,7 @@ ipcMain.on('installModpack', async (event, forced)=>{
   let modpackFolder = settings.minecraftPath
   if (settings.createProfiles) modpackFolder += '/modpacks/'+modpackSlug
 
-  if (await fs.exists(modpackFolder+'/modpack.json')){
+  try {
     let currentModpack = JSON.parse(await fs.readFile(`${modpackFolder}/modpack.json`))
     if (currentModpack.version == manifest.manifestVersion && !forced){
       win.webContents.send("updateStatus", 'Modpack already installed!')
@@ -235,15 +239,16 @@ ipcMain.on('installModpack', async (event, forced)=>{
       }
       await fse.remove(`${modpackFolder}/mods`)
     }
-  }
+  } catch { /*empty*/ }
 
   win.webContents.send("updateStatus", 'Initializing download...')
 
   const modlistFolder = settings.minecraftPath+'/.modlist'
-  if (!(await fs.exists(modlistFolder))) await fs.mkdir(modlistFolder, { recursive: true })
+  try { await fs.mkdir(modlistFolder, { recursive: true }) } catch { /*empty*/ }
   let filesDB = {}
-  if (await fs.exists(`${modlistFolder}/filesDB.json`))
+  try {
     filesDB = JSON.parse(await fs.readFile(`${modlistFolder}/filesDB.json`))
+  } catch { /*empty*/ }
 
   let filesKeys = Object.keys(filesDB)
   let modpackFiles = []
@@ -276,7 +281,7 @@ ipcMain.on('installModpack', async (event, forced)=>{
     win.webContents.send("updateStatus", `Downloading ${fileObject.type} ${fileObject.projectName}... (${i+1}/${manifest.files.length})`)
 
     let filePath = `${modlistFolder}/${fileObject.type}s/${fileObject.fileName}`
-    let alreadyDownloaded = await fs.exists(filePath)
+    let alreadyDownloaded = await fs.access(filePath, fsConstanst.F_OK)
     if (alreadyDownloaded){
       let stats = await fs.stat(filePath)
       alreadyDownloaded = stats.size == fileObject.fileLength
@@ -294,7 +299,7 @@ ipcMain.on('installModpack', async (event, forced)=>{
 
   await fs.writeFile(`${modlistFolder}/filesDB.json`, JSON.stringify(filesDB))
 
-  if (!(await fs.exists(modpackFolder))) await fs.mkdir(modpackFolder, { recursive: true })
+  try { await fs.mkdir(modpackFolder, { recursive: true }) } catch{ /*empty*/ }
   if (settings.modSymlink){
     for (let i = 0; i < modpackFiles.length; i++){
       let file = modpackFiles[i]
