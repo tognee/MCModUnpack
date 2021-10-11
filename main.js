@@ -185,7 +185,13 @@ async function loadModpack(filepath){
 
 async function checkForge(mc, ver){
   let loaderFolder = `${mc}-forge-${ver}`
-  let isModloaderInstalled = await fs.access(settings.minecraftPath+'/versions/'+loaderFolder, fsConstanst.F_OK)
+  let isModloaderInstalled
+  try {
+    await fs.access(settings.minecraftPath+'/versions/'+loaderFolder, fsConstanst.F_OK | fsConstanst.R_OK | fsConstanst.W_OK)
+    isModloaderInstalled = true
+  } catch {
+    isModloaderInstalled = false
+  }
   if (isModloaderInstalled) return loaderFolder
   win.webContents.send("updateStatus", `Please install Forge ${ver} for ${mc}`)
   const url = `https://adfoc.us/serve/sitelinks/?id=271228&url=https://maven.minecraftforge.net/net/minecraftforge/forge/${mc}-${ver}/forge-${mc}-${ver}-installer.jar`
@@ -195,7 +201,13 @@ async function checkForge(mc, ver){
 
 async function checkFabric(mc, ver){
   let loaderFolder = `fabric-loader-${ver}-${mc}`
-  let isModloaderInstalled = await fs.access(settings.minecraftPath+'/versions/'+loaderFolder, fsConstanst.F_OK)
+  let isModloaderInstalled
+  try {
+    await fs.access(settings.minecraftPath+'/versions/'+loaderFolder, fsConstanst.F_OK | fsConstanst.R_OK | fsConstanst.W_OK)
+    isModloaderInstalled = true
+  } catch {
+    isModloaderInstalled = false
+  }
   if (isModloaderInstalled) return loaderFolder
   win.webContents.send("updateStatus", `Please install Fabric Loader ${ver} for ${mc}`)
   const url = `https://fabricmc.net/use/`
@@ -281,7 +293,14 @@ ipcMain.on('installModpack', async (event, forced)=>{
     win.webContents.send("updateStatus", `Downloading ${fileObject.type} ${fileObject.projectName}... (${i+1}/${manifest.files.length})`)
 
     let filePath = `${modlistFolder}/${fileObject.type}s/${fileObject.fileName}`
-    let alreadyDownloaded = await fs.access(filePath, fsConstanst.F_OK)
+    let alreadyDownloaded
+    try {
+      alreadyDownloaded = true
+      await fs.access(filePath, fsConstanst.F_OK | fsConstanst.R_OK | fsConstanst.W_OK)
+    } catch {
+      alreadyDownloaded = false
+    }
+
     if (alreadyDownloaded){
       let stats = await fs.stat(filePath)
       alreadyDownloaded = stats.size == fileObject.fileLength
