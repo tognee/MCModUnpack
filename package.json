@@ -1,6 +1,6 @@
 {
   "name": "MCModUnpack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A modpack installer for minecraft",
   "main": "main.js",
   "author": "tognee <tognee64@gmail.com>",
@@ -21,7 +21,7 @@
     "mime-types": "^2.1.30"
   },
   "build": {
-    "appId": "me.tognee.mcmodunpack",
+    "appId": "tognee.mcmodunpack",
     "productName": "mc-modunpack",
     "mac": {
       "category": "public.app-category.games"

@@ -203,6 +203,18 @@ button:disabled {
 }
 #default-settings:hover {background-color: #ff453a;}
 
+#saved-toast {
+  position: absolute;
+  background-color: #222324;
+  padding: 8px;
+  border-radius: 4px;
+  bottom: 64px;
+  right: 25px;
+  opacity: 0;
+  font-size: 14px;
+  transition: .4s;
+}
+
 a {
   color: var(--main-color);
   text-decoration: none;

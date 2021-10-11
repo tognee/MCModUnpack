@@ -5,6 +5,7 @@ const btnOpenSettings = document.querySelector("#open-settings")
 const btnCloseSettings = document.querySelector("#close-settings")
 const btnSaveSettings = document.querySelector("#save-settings")
 const btnDefaultSettings = document.querySelector("#default-settings")
+const toastSaved = document.querySelector("#saved-toast")
 
 const sectionSelectModpack = document.querySelector("#modpack-selection")
 const sectionDisplayModpack = document.querySelector("#modpack-info")
@@ -13,6 +14,7 @@ const sectionSettings = document.querySelector("#settings-tab")
 const minecraftPath = document.querySelector("#settings-tab input[name=minecraftPath]")
 const createProfiles = document.querySelector("#settings-tab input[name=createProfiles]")
 const modSymlink = document.querySelector("#settings-tab input[name=modSymlink]")
+const skipModloaderCheck = document.querySelector("#settings-tab input[name=skipModloaderCheck]")
 
 const modpackTitle = document.querySelector("#mod-container .info h1")
 const modpackAuthor = document.querySelector("#mod-container .info h2")
@@ -123,13 +125,17 @@ btnSaveSettings.addEventListener('click', (event)=>{
     minecraftPath: minecraftPath.value,
     createProfiles: createProfiles.checked,
     modSymlink: modSymlink.checked,
+    skipModloaderCheck: skipModloaderCheck.checked
   })
+  toastSaved.style.opacity = 1;
+  setTimeout(()=>{ toastSaved.style.opacity = 0;}, 700)
 })
 
 window.api.receive("settings", (settings) => {
   minecraftPath.value = settings.minecraftPath
   createProfiles.checked = settings.createProfiles
   modSymlink.checked = settings.modSymlink
+  skipModloaderCheck.checked = settings.skipModloaderCheck
 })
 
 btnDefaultSettings.addEventListener('click', (event)=>{
