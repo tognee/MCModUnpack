@@ -221,9 +221,10 @@ ipcMain.on('installModpack', async (event, forced)=>{
   let loader = manifest.minecraft.modLoaders[0].id
   let [loaderName, loaderVersion] = loader.split('-')
 
+  let loaderFolder
+
   if (!settings.skipModloaderCheck){
     win.webContents.send("updateStatus", `Checking if ${loader} is installed...`)
-    let loaderFolder
     switch (loaderName) {
       case 'forge': loaderFolder = await checkForge(minecraftVersion, loaderVersion); break;
       case 'fabric': loaderFolder = await checkFabric(minecraftVersion, loaderVersion); break;
@@ -231,6 +232,11 @@ ipcMain.on('installModpack', async (event, forced)=>{
     if (!loaderFolder){
       win.webContents.send("installationDone", false)
       return
+    }
+  } else {
+    switch (loaderName) {
+      case 'forge': loaderFolder = `${minecraftVersion}-forge-${loaderVersion}`
+      case 'fabric': loaderFolder = `fabric-loader-${loaderVersion}-${minecraftVersion}`
     }
   }
 
